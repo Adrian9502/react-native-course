@@ -7,8 +7,8 @@ const App = () => {
     <View className="flex-1 items-center justify-center bg-white">
       <Text className="my-5 font-pblack">this is the child component</Text>
       <StatusBar style="auto" />
-      <Link href="/Profile" style={{ color: "blue" }}>
-        Go to Profile
+      <Link href="/Home" style={{ color: "blue" }}>
+        Go to Home
       </Link>
     </View>
   );
