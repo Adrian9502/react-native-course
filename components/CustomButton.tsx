@@ -17,9 +17,9 @@ interface CustomButtonProps {
 const CustomButton: React.FC<CustomButtonProps> = ({
   title,
   handlePress,
-  containerStyles = "", // Default value for containerStyles
-  textStyles = "", // Default value for textStyles
-  isLoading = false, // Default value for isLoading
+  containerStyles = "",
+  textStyles = "",
+  isLoading = false,
 }) => {
   return (
     <TouchableOpacity
