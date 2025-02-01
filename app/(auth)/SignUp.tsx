@@ -4,16 +4,66 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../../constants";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
+import { createUser } from "../../lib/appwrite";
+import Toast from "react-native-toast-message";
+import { AppwriteException } from "react-native-appwrite";
+
+interface FormState {
+  userName: string;
+  email: string;
+  password: string;
+}
 const SignUp = () => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     userName: "",
     email: "",
     password: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // submit function
-  const handleSubmit = () => {};
+  const handleSubmit = async (): Promise<void> => {
+    if (!form.userName || !form.email || !form.password) {
+      Toast.show({
+        type: "error",
+        text1: "Error!",
+        text2: "Please fill all the fields.",
+      });
+      return; // Exit early if fields are empty
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await createUser(form.email, form.password, form.userName);
+
+      // Set it to global state (if needed)
+
+      router.replace("/Home");
+    } catch (error) {
+      let errorMessage = "An unexpected error occurred. Please try again.";
+
+      if (error instanceof AppwriteException) {
+        // Handle specific Appwrite errors
+        if (error.message.includes("Invalid `password` param")) {
+          errorMessage =
+            "Password must be between 8 and 265 characters long and should not be commonly used.";
+        } else {
+          errorMessage = error.message; // Fallback to the original error message
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message; // Handle generic errors
+      }
+
+      Toast.show({
+        type: "error",
+        text1: "Error!",
+        text2: errorMessage,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView>
@@ -24,13 +74,13 @@ const SignUp = () => {
             className="w-[115px] h-[35px]"
           />
           <Text className="text-2xl text-white font-psemibold mt-10">
-            Sign in to Aora
+            Sign up to Aora
           </Text>
 
           <FormField
             title="Username"
             value={form.userName}
-            handleChangeText={(e) => setForm({ ...form, email: e })}
+            handleChangeText={(e) => setForm({ ...form, userName: e })}
             otherStyles="mt-7"
             keyboardType="email-address"
           />
@@ -49,7 +99,7 @@ const SignUp = () => {
             keyboardType="password"
           />
           <CustomButton
-            title="Sign In"
+            title="Sign Up"
             handlePress={handleSubmit}
             containerStyles="mt-7"
             isLoading={isSubmitting}
@@ -68,6 +118,7 @@ const SignUp = () => {
           </View>
         </View>
       </ScrollView>
+      <Toast position="bottom" bottomOffset={50} />
     </SafeAreaView>
   );
 };

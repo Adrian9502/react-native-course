@@ -5,14 +5,65 @@ import { images } from "../../constants";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
 import { Link } from "expo-router";
+import Toast from "react-native-toast-message";
+import { AppwriteException } from "react-native-appwrite";
+import { router } from "expo-router";
+import { getCurrentUser, SignInUser } from "../../lib/appwrite";
+interface FormState {
+  email: string;
+  password: string;
+}
 const SignIn = () => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     email: "",
     password: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isLogged, setIsLogged] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // submit function
-  const handleSubmit = () => {};
+  const handleSubmit = async () => {
+    if (!form.email || !form.password) {
+      Toast.show({
+        type: "error",
+        text1: "Error!",
+        text2: "Please fill all the fields.",
+      });
+      return; // Exit early if fields are empty
+    }
+
+    setIsSubmitting(true);
+    try {
+      await SignInUser(form.email, form.password);
+      const result = await getCurrentUser();
+      setUser(result);
+      setIsLogged(true);
+
+      router.replace("/Home");
+    } catch (error) {
+      let errorMessage = "An unexpected error occurred. Please try again.";
+
+      if (error instanceof AppwriteException) {
+        // Handle specific Appwrite errors
+        if (error.message.includes("Invalid `password` param")) {
+          errorMessage =
+            "Password must be between 8 and 265 characters long and should not be commonly used.";
+        } else {
+          errorMessage = error.message; // Fallback to the original error message
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message; // Handle generic errors
+      }
+
+      Toast.show({
+        type: "error",
+        text1: "Error!",
+        text2: errorMessage,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView>
@@ -60,6 +111,7 @@ const SignIn = () => {
           </View>
         </View>
       </ScrollView>
+      <Toast position="bottom" bottomOffset={50} />
     </SafeAreaView>
   );
 };
