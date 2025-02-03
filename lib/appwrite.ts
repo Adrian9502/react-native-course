@@ -18,10 +18,20 @@ export const config = {
   storageId: "679c98410007507574d7",
 };
 
+const {
+  endpoint,
+  platform,
+  projectId,
+  databaseId,
+  userCollectionId,
+  videoCollectionId,
+  storageId,
+} = config;
+
 const client = new Client()
-  .setEndpoint(config.endpoint)
-  .setProject(config.projectId)
-  .setPlatform(config.platform);
+  .setEndpoint(endpoint)
+  .setProject(projectId)
+  .setPlatform(platform);
 
 const account = new Account(client);
 const avatars = new Avatars(client);
@@ -52,8 +62,8 @@ export const createUser = async (
 
     await SignInUser(email, password);
     const newUser = await databases.createDocument<User>(
-      config.databaseId,
-      config.userCollectionId,
+      databaseId,
+      userCollectionId,
       ID.unique(),
       { accountId: newAccount.$id, email, username, avatar: avatarUrl }
     );
@@ -82,17 +92,84 @@ export const SignInUser = async (
 export const getCurrentUser = async () => {
   try {
     const currentAccount = await account.get();
+    if (!currentAccount) {
+      throw new Error("No current account found.");
+    }
 
-    if (!currentAccount) throw Error;
-
-    const currentUser = await databases.listDocuments(
-      config.databaseId,
-      config.userCollectionId,
+    const currentUserResponse = await databases.listDocuments(
+      databaseId,
+      userCollectionId,
       [Query.equal("accountId", currentAccount.$id)]
     );
 
-    if (!currentUser) throw Error;
+    if (!currentUserResponse || !currentUserResponse.documents.length) {
+      throw new Error("No user document found for the current account.");
+    }
 
-    return currentUser.documents[0];
-  } catch (error) {}
+    return currentUserResponse.documents[0];
+  } catch (error) {
+    console.error("Error in getCurrentUser:", error);
+    throw error;
+  }
+};
+
+export const getAllPosts = async () => {
+  try {
+    const posts = await databases.listDocuments(databaseId, videoCollectionId);
+
+    // Map documents to VideoProps structure
+    const formattedPosts = posts.documents.map((doc) => ({
+      $id: doc.$id,
+      title: doc.title, // Ensure these fields exist in your Appwrite database
+      thumbnail: doc.thumbnail,
+      video: doc.video,
+      creator: {
+        username: doc.creator_username, // Match these to your actual database fields
+        avatar: doc.creator_avatar,
+      },
+    }));
+
+    console.log("Formatted posts:", formattedPosts);
+    return formattedPosts; // Return the formatted data
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    throw new Error(error);
+  }
+};
+
+export const getLatestPosts = async () => {
+  try {
+    const posts = await databases.listDocuments(databaseId, videoCollectionId, [
+      Query.orderDesc("$createdAt"),
+      Query.limit(7),
+    ]);
+
+    // Map documents to VideoProps structure
+    const formattedPosts = posts.documents.map((doc) => ({
+      $id: doc.$id,
+      title: doc.title,
+      thumbnail: doc.thumbnail,
+      video: doc.video,
+      creator: {
+        username: doc.creator_username,
+        avatar: doc.creator_avatar,
+      },
+    }));
+
+    console.log("Formatted latest posts:", formattedPosts);
+    return formattedPosts; // Return the formatted data
+  } catch (error) {
+    console.error("Error fetching latest posts:", error);
+    throw new Error(error);
+  }
+};
+
+export const logoutUser = async () => {
+  try {
+    await account.deleteSession("current");
+    console.log("User logged out successfully");
+    // Optionally, redirect to your login screen here using your navigation logic
+  } catch (error) {
+    console.error("Error logging out:", error);
+  }
 };

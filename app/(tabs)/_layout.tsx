@@ -45,7 +45,7 @@ const TabsLayout: React.FC = () => {
             backgroundColor: "#161622",
             paddingBottom: 0,
             borderTopWidth: 1,
-            borderTopColor: "#232533",
+            borderTopColor: "#161633",
             paddingTop: 10,
             height: 70,
           },
