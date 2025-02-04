@@ -153,7 +153,6 @@ export const getLatestPosts = async () => {
       },
     }));
 
-    console.log("Formatted latest posts:", formattedPosts);
     return formattedPosts; // Return the formatted data
   } catch (error) {
     console.error("Error fetching latest posts:", error);
@@ -161,6 +160,30 @@ export const getLatestPosts = async () => {
   }
 };
 
+export const searchPosts = async (query) => {
+  try {
+    const posts = await databases.listDocuments(databaseId, videoCollectionId, [
+      Query.search("title", query),
+    ]);
+
+    // Map documents to VideoProps structure
+    const formattedPosts = posts.documents.map((doc) => ({
+      $id: doc.$id,
+      title: doc.title,
+      thumbnail: doc.thumbnail,
+      video: doc.video,
+      creator: {
+        username: doc.creator?.username, // Access the joined creator data
+        avatar: doc.creator?.avatar,
+      },
+    }));
+
+    return formattedPosts;
+  } catch (error) {
+    console.error("Error fetching search posts:", error);
+    throw new Error(error);
+  }
+};
 export const checkSession = async () => {
   try {
     const session = await account.getSession("current");
@@ -173,6 +196,7 @@ export const checkSession = async () => {
     return null;
   }
 };
+
 export const logoutUser = async () => {
   try {
     await account.deleteSession("current");
