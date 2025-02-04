@@ -1,5 +1,5 @@
 import { View, FlatList } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TrendingItem from "./TrendingItem";
 
 interface Creator {
@@ -22,6 +22,16 @@ interface TrendingProps {
 const Trending: React.FC<TrendingProps> = ({ posts }) => {
   const [activeItem, setActiveItem] = useState<string>("");
 
+  useEffect(() => {
+    if (posts && posts.length > 0) {
+      setActiveItem(posts[0].$id);
+    }
+  }, [posts]);
+  const viewAbleItemsChanged = ({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      setActiveItem(viewableItems[0].key);
+    }
+  };
   return (
     <View>
       <FlatList
@@ -32,12 +42,11 @@ const Trending: React.FC<TrendingProps> = ({ posts }) => {
         renderItem={({ item }) => (
           <TrendingItem activeItem={activeItem} item={item} />
         )}
-        onScroll={({ nativeEvent }) => {
-          const index = Math.round(
-            nativeEvent.contentOffset.x / nativeEvent.layoutMeasurement.width
-          );
-          setActiveItem(posts[index]?.$id); // Set the active item based on scroll
+        onViewableItemsChanged={viewAbleItemsChanged}
+        viewabilityConfig={{
+          itemVisiblePercentThreshold: 70,
         }}
+        contentOffset={{ x: 170, y: 0 }}
       />
     </View>
   );

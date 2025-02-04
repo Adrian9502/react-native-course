@@ -7,7 +7,6 @@ import {
   Models,
   Query,
 } from "react-native-appwrite";
-
 export const config = {
   endpoint: "https://cloud.appwrite.io/v1",
   platform: "com.rn.aora",
@@ -117,20 +116,18 @@ export const getAllPosts = async () => {
   try {
     const posts = await databases.listDocuments(databaseId, videoCollectionId);
 
-    // Map documents to VideoProps structure
     const formattedPosts = posts.documents.map((doc) => ({
       $id: doc.$id,
-      title: doc.title, // Ensure these fields exist in your Appwrite database
+      title: doc.title,
       thumbnail: doc.thumbnail,
       video: doc.video,
       creator: {
-        username: doc.creator_username, // Match these to your actual database fields
-        avatar: doc.creator_avatar,
+        username: doc.creator?.username || doc.creatorUsername || doc.username,
+        avatar: doc.creator?.avatar || doc.creatorAvatar || doc.avatar,
       },
     }));
 
-    console.log("Formatted posts:", formattedPosts);
-    return formattedPosts; // Return the formatted data
+    return formattedPosts;
   } catch (error) {
     console.error("Error fetching posts:", error);
     throw new Error(error);
@@ -164,6 +161,18 @@ export const getLatestPosts = async () => {
   }
 };
 
+export const checkSession = async () => {
+  try {
+    const session = await account.getSession("current");
+    if (session) {
+      const user = await getCurrentUser();
+      return { session, user };
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+};
 export const logoutUser = async () => {
   try {
     await account.deleteSession("current");

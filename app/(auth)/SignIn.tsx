@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, Image } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../../constants";
 import FormField from "../../components/FormField";
@@ -7,8 +7,8 @@ import CustomButton from "../../components/CustomButton";
 import { Link } from "expo-router";
 import Toast from "react-native-toast-message";
 import { AppwriteException } from "react-native-appwrite";
-import { router } from "expo-router";
-import { getCurrentUser, SignInUser } from "../../lib/appwrite";
+import { useRouter } from "expo-router";
+import { getCurrentUser, SignInUser, checkSession } from "../../lib/appwrite";
 interface FormState {
   email: string;
   password: string;
@@ -22,6 +22,24 @@ const SignIn = () => {
   const [isLogged, setIsLogged] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   // submit function
+
+  const router = useRouter();
+  useEffect(() => {
+    const checkActiveSession = async () => {
+      try {
+        const sessionData = await checkSession();
+        if (sessionData) {
+          // If there's an active session, redirect to home
+          router.replace("/(tabs)/Home");
+        }
+      } catch (error) {
+        console.log("Session check error:", error);
+      }
+    };
+
+    checkActiveSession();
+  }, []);
+
   const handleSubmit = async () => {
     if (!form.email || !form.password) {
       Toast.show({

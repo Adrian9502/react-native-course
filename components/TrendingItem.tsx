@@ -1,13 +1,8 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ImageBackground,
-  Image,
-} from "react-native";
+import { View, TouchableOpacity, ImageBackground, Image } from "react-native";
 import React, { useState } from "react";
 import * as Animatable from "react-native-animatable";
-import { Video, ResizeMode } from "expo-av";
+import { WebView } from "react-native-webview";
+import { icons } from "../constants";
 
 interface Creator {
   username: string;
@@ -29,7 +24,7 @@ interface TrendingItemProps {
 
 const zoomIn = {
   0: { transform: [{ scale: 0.9 }] },
-  1: { transform: [{ scale: 1.1 }] },
+  1: { transform: [{ scale: 1 }] },
 };
 
 const zoomOut = {
@@ -46,34 +41,46 @@ const TrendingItem: React.FC<TrendingItemProps> = ({ activeItem, item }) => {
       animation={activeItem === item.$id ? zoomIn : zoomOut}
       duration={500}
     >
-      <TouchableOpacity onPress={() => setPlay(!play)}>
-        {play ? (
-          <Video
+      {play ? (
+        <View
+          style={{
+            width: 208,
+            height: 288,
+            borderRadius: 35,
+            marginTop: 12,
+            backgroundColor: "rgba(255, 255, 255, 0.1)",
+            overflow: "hidden",
+          }}
+        >
+          <WebView
             source={{ uri: item.video }}
-            style={{ width: 200, height: 300 }}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay
+            style={{
+              flex: 1, // Ensures WebView takes up the full space of its parent container
+              borderRadius: 35,
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+            }}
           />
-        ) : (
+        </View>
+      ) : (
+        <TouchableOpacity
+          className="relative justify-center items-center"
+          activeOpacity={0.7}
+          onPress={() => setPlay(true)}
+        >
           <ImageBackground
             source={{ uri: item.thumbnail }}
             style={{ width: 200, height: 300 }}
-            className="rounded-lg overflow-hidden"
-          >
-            <View className="absolute bottom-0 left-0 right-0 p-2 bg-black bg-opacity-50">
-              <Text className="text-white text-lg font-bold">{item.title}</Text>
-              <View className="flex-row items-center mt-1">
-                <Image
-                  source={{ uri: item.creator.avatar }}
-                  style={{ width: 30, height: 30 }}
-                  className="rounded-full mr-2"
-                />
-                <Text className="text-white">{item.creator.username}</Text>
-              </View>
-            </View>
-          </ImageBackground>
-        )}
-      </TouchableOpacity>
+            className="w-52 h-72 rounded-[35px] my-5 overflow-hidden shadow-lg shadow-black/40"
+            resizeMode="cover"
+          />
+
+          <Image
+            source={icons.play}
+            className="w-12 h-12 absolute"
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      )}
     </Animatable.View>
   );
 };
