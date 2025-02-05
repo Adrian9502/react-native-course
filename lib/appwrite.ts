@@ -224,13 +224,9 @@ export const getUserPosts = async (userId: string) => {
   }
 
   try {
-    console.log("Fetching posts for userId:", userId);
-
     const posts = await databases.listDocuments(databaseId, videoCollectionId, [
       Query.equal("creator", userId),
     ]);
-
-    console.log("Raw posts response:", posts);
 
     const formattedPosts = posts.documents.map((doc) => ({
       $id: doc.$id,
@@ -243,7 +239,6 @@ export const getUserPosts = async (userId: string) => {
       },
     }));
 
-    console.log("Formatted posts:", formattedPosts);
     return formattedPosts;
   } catch (error) {
     console.error("Error in getUserPosts:", error);

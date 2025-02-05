@@ -1,4 +1,11 @@
-import { View, Text, FlatList, TouchableOpacity, Image } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React from "react";
 import EmptyState from "../../components/EmptyState";
@@ -12,7 +19,7 @@ import { router } from "expo-router";
 import Toast from "react-native-toast-message";
 const Profile = () => {
   const { user, setUser, setIsLoggedIn, isLoading } = useGlobalContext();
-  const { data: posts } = useAppwrite(() =>
+  const { data: posts, loading } = useAppwrite(() =>
     user?.$id ? getUserPosts(user.$id) : null
   );
 
@@ -94,12 +101,19 @@ const Profile = () => {
             </View>
           </View>
         )}
-        ListEmptyComponent={() => (
-          <EmptyState
-            title="No Videos Found"
-            subtitle="Looks like you haven't created any videos yet!"
-          />
-        )}
+        ListEmptyComponent={() =>
+          loading ? (
+            <View className="flex-1 justify-center items-center mt-20">
+              <ActivityIndicator size="large" color="#FFFFFF" />
+              <Text className="text-white mt-4">Loading Videos...</Text>
+            </View>
+          ) : (
+            <EmptyState
+              title="No Videos Found"
+              subtitle="Looks like you haven't created any videos yet!"
+            />
+          )
+        }
       />
     </SafeAreaView>
   );

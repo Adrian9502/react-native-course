@@ -1,4 +1,11 @@
-import { View, Text, FlatList, Image, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  RefreshControl,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
 import { images } from "../../constants";
@@ -10,10 +17,9 @@ import useAppwrite from "../../lib/useAppwrite";
 import VideoCard from "../../components/VideoCard";
 import { useGlobalContext } from "../../context/GlobalProvider";
 const Home = () => {
-  const { user, setUser, setIsLoggedIn, isLoading } = useGlobalContext();
-
+  const { user } = useGlobalContext();
   const [refreshing, setRefreshing] = useState(false);
-  const { data: posts, refetch } = useAppwrite(getAllPosts);
+  const { data: posts, refetch, loading } = useAppwrite(getAllPosts);
   const { data: latestPosts } = useAppwrite(getLatestPosts);
 
   const onRefresh = async () => {
@@ -57,12 +63,19 @@ const Home = () => {
             </View>
           </View>
         )}
-        ListEmptyComponent={() => (
-          <EmptyState
-            title="No Videos Found"
-            subtitle="Be the first one to upload a video"
-          />
-        )}
+        ListEmptyComponent={() =>
+          loading ? (
+            <View className="flex-1 justify-center items-center mt-20">
+              <ActivityIndicator size="large" color="#FFFFFF" />
+              <Text className="text-white mt-4">Loading Videos...</Text>
+            </View>
+          ) : (
+            <EmptyState
+              title="No Videos Found"
+              subtitle="Be the first one to upload a video"
+            />
+          )
+        }
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

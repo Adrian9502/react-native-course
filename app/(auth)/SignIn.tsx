@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Image } from "react-native";
+import { View, Text, ScrollView, Image, ActivityIndicator } from "react-native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../../constants";
@@ -14,6 +14,7 @@ interface FormState {
   password: string;
 }
 const SignIn = () => {
+  const [isChecking, setIsChecking] = useState<boolean>(false);
   const [form, setForm] = useState<FormState>({
     email: "",
     password: "",
@@ -24,6 +25,7 @@ const SignIn = () => {
   const router = useRouter();
   useEffect(() => {
     const checkActiveSession = async () => {
+      setIsChecking(true);
       try {
         const sessionData = await checkSession();
         if (sessionData) {
@@ -32,12 +34,22 @@ const SignIn = () => {
         }
       } catch (error) {
         console.log("Session check error:", error);
+      } finally {
+        setIsChecking(false);
       }
     };
 
     checkActiveSession();
   }, []);
 
+  if (isChecking) {
+    return (
+      <SafeAreaView className="bg-primary h-full justify-center items-center">
+        <ActivityIndicator size="large" color="#fff" />
+        <Text className="text-white mt-4 text-lg">Checking session...</Text>
+      </SafeAreaView>
+    );
+  }
   // submit function
   const handleSubmit = async () => {
     if (!form.email || !form.password) {
