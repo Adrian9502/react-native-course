@@ -82,6 +82,8 @@ export const SignInUser = async (
     const session = await account.createEmailPasswordSession(email, password);
     return session;
   } catch (error) {
+    console.log(error);
+
     throw new Error(
       error instanceof Error ? error.message : "An error occurred"
     );
@@ -184,6 +186,40 @@ export const searchPosts = async (query) => {
     throw new Error(error);
   }
 };
+
+export const getUserPosts = async (userId: string) => {
+  if (!userId) {
+    console.log("No userId provided to getUserPosts");
+    return [];
+  }
+
+  try {
+    console.log("Fetching posts for userId:", userId);
+
+    const posts = await databases.listDocuments(databaseId, videoCollectionId, [
+      Query.equal("creator", userId),
+    ]);
+
+    console.log("Raw posts response:", posts);
+
+    const formattedPosts = posts.documents.map((doc) => ({
+      $id: doc.$id,
+      title: doc.title,
+      thumbnail: doc.thumbnail,
+      video: doc.video,
+      creator: {
+        username: doc.creator?.username,
+        avatar: doc.creator?.avatar,
+      },
+    }));
+
+    console.log("Formatted posts:", formattedPosts);
+    return formattedPosts;
+  } catch (error) {
+    console.error("Error in getUserPosts:", error);
+    throw error;
+  }
+};
 export const checkSession = async () => {
   try {
     const session = await account.getSession("current");
@@ -199,10 +235,11 @@ export const checkSession = async () => {
 
 export const logoutUser = async () => {
   try {
-    await account.deleteSession("current");
-    console.log("User logged out successfully");
-    // Optionally, redirect to your login screen here using your navigation logic
+    const session = await account.deleteSession("current");
+
+    return session;
   } catch (error) {
     console.error("Error logging out:", error);
+    throw new Error(error);
   }
 };

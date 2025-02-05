@@ -14,7 +14,7 @@ import { usePathname, router } from "expo-router";
 import Toast from "react-native-toast-message";
 // Define types for props
 interface SearchInputProps {
-  initialQuery: string;
+  initialQuery?: string;
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({ initialQuery }) => {

@@ -6,9 +6,9 @@ import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
 import { Link } from "expo-router";
 import Toast from "react-native-toast-message";
-import { AppwriteException } from "react-native-appwrite";
 import { useRouter } from "expo-router";
 import { getCurrentUser, SignInUser, checkSession } from "../../lib/appwrite";
+import { useGlobalContext } from "../../context/GlobalProvider";
 interface FormState {
   email: string;
   password: string;
@@ -18,10 +18,8 @@ const SignIn = () => {
     email: "",
     password: "",
   });
-  const [user, setUser] = useState(null);
-  const [isLogged, setIsLogged] = useState(null);
+  const { setUser, setIsLoggedIn } = useGlobalContext();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  // submit function
 
   const router = useRouter();
   useEffect(() => {
@@ -40,6 +38,7 @@ const SignIn = () => {
     checkActiveSession();
   }, []);
 
+  // submit function
   const handleSubmit = async () => {
     if (!form.email || !form.password) {
       Toast.show({
@@ -47,36 +46,30 @@ const SignIn = () => {
         text1: "Error!",
         text2: "Please fill all the fields.",
       });
-      return; // Exit early if fields are empty
+      return;
     }
+
+    console.log(form.email, form.password);
 
     setIsSubmitting(true);
     try {
+      // First create the session
       await SignInUser(form.email, form.password);
-      const result = await getCurrentUser();
-      setUser(result);
-      setIsLogged(true);
 
-      router.replace("/Home");
+      const userData = await getCurrentUser();
+
+      // Update global context
+      setUser(userData);
+      setIsLoggedIn(true);
+
+      // Navigate to home
+      router.replace("/(tabs)/Home");
     } catch (error) {
-      let errorMessage = "An unexpected error occurred. Please try again.";
-
-      if (error instanceof AppwriteException) {
-        // Handle specific Appwrite errors
-        if (error.message.includes("Invalid `password` param")) {
-          errorMessage =
-            "Password must be between 8 and 265 characters long and should not be commonly used.";
-        } else {
-          errorMessage = error.message; // Fallback to the original error message
-        }
-      } else if (error instanceof Error) {
-        errorMessage = error.message; // Handle generic errors
-      }
-
+      console.log("error login:", error);
       Toast.show({
         type: "error",
-        text1: "Error!",
-        text2: errorMessage,
+        text1: "Can't log in!",
+        text2: error.message,
       });
     } finally {
       setIsSubmitting(false);
