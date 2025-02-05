@@ -2,6 +2,7 @@ import { View, Text, Image } from "react-native";
 import React from "react";
 import { Tabs } from "expo-router";
 import { icons } from "../../constants";
+import Toast from "react-native-toast-message";
 
 // Define types for TabIcon props
 interface TabIconProps {
@@ -112,6 +113,7 @@ const TabsLayout: React.FC = () => {
           }}
         />
       </Tabs>
+      <Toast />
     </>
   );
 };

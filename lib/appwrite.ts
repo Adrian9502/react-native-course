@@ -5,8 +5,11 @@ import {
   Avatars,
   Databases,
   Models,
+  ImageGravity,
   Query,
+  Storage,
 } from "react-native-appwrite";
+
 export const config = {
   endpoint: "https://cloud.appwrite.io/v1",
   platform: "com.rn.aora",
@@ -35,12 +38,39 @@ const client = new Client()
 const account = new Account(client);
 const avatars = new Avatars(client);
 const databases = new Databases(client);
+const storage = new Storage(client);
 
 interface User extends Models.Document {
   accountId: string;
   email: string;
   username: string;
   avatar: string;
+}
+// Interface for getFilePreview parameters
+interface GetFilePreviewParams {
+  fileId: string;
+  type: "video" | "image";
+}
+
+// Interface for uploadFile parameters
+interface UploadFileParams {
+  file: FileType; // Define FileType based on the file structure if needed
+  type: "video" | "image";
+}
+
+// Interface for createVideo parameters
+interface CreateVideoForm {
+  thumbnail: any;
+  video: any;
+  title: string;
+  prompt: string;
+  userId: string;
+}
+
+// Example FileType interface (adjust according to the actual file structure)
+interface FileType {
+  mimeType: string;
+  [key: string]: any;
 }
 
 export const createUser = async (
@@ -241,5 +271,83 @@ export const logoutUser = async () => {
   } catch (error) {
     console.error("Error logging out:", error);
     throw new Error(error);
+  }
+};
+export const getFilePreview = async (params: GetFilePreviewParams) => {
+  const { fileId, type } = params;
+  let fileUrl;
+  try {
+    if (type === "video") {
+      fileUrl = storage.getFileView(storageId, fileId);
+    } else if (type === "image") {
+      fileUrl = storage.getFilePreview(
+        storageId,
+        fileId,
+        2000,
+        2000,
+        ImageGravity.Center,
+        100
+      );
+    } else {
+      throw new Error("Invalid file type.");
+    }
+
+    if (!fileUrl) throw new Error("Failed to get file URL");
+
+    return fileUrl;
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : "An error occurred"
+    );
+  }
+};
+
+export const uploadFile = async (params: UploadFileParams) => {
+  const { file, type } = params;
+  if (!file) return null;
+
+  const { mimeType, ...rest } = file;
+  const asset = { type: mimeType, ...rest };
+
+  try {
+    const uploadedFile = await storage.createFile(
+      storageId,
+      ID.unique(),
+      asset
+    );
+
+    const fileUrl = await getFilePreview({ fileId: uploadedFile.$id, type });
+    return fileUrl;
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : "Upload failed");
+  }
+};
+
+export const createVideo = async (form: CreateVideoForm) => {
+  try {
+    const [thumbnailUrl, videoUrl] = await Promise.all([
+      uploadFile({ file: form.thumbnail, type: "image" }),
+      uploadFile({ file: form.video, type: "video" }),
+    ]);
+
+    const newPost = await databases.createDocument(
+      databaseId,
+      videoCollectionId,
+      ID.unique(),
+      {
+        title: form.title,
+        thumbnail: thumbnailUrl,
+        video: videoUrl,
+        prompt: form.prompt,
+        creator: form.userId,
+      }
+    );
+
+    return newPost;
+  } catch (error) {
+    console.error("Error creating video:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to create video"
+    );
   }
 };
